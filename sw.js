@@ -1,5 +1,5 @@
 /* GameCenter service worker: نصب اپ، کار آفلاین پوسته سایت و اعلان‌ها */
-const CACHE = 'gc-v14';
+const CACHE = 'gc-v15';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 const SKIP = /firestore\.googleapis|identitytoolkit|securetoken|googleapis\.com\/(v1|identity)|api\.emailjs\.com/;
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {})); self.skipWaiting(); });
