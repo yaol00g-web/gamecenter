@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="theme-color" content="#f6f8fc">
 <link rel="manifest" href="manifest.webmanifest">
+<script>window.__bip=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__bip=e;});</script>
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1596,6 +1597,19 @@ ol.inst{padding-inline-start:20px;margin-top:14px;line-height:2.1}
 @media (max-width:820px){.card-fab{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
 @media (max-width:480px){.inst-bar{padding:8px 10px;gap:8px}.inst-bar .inst-ic{display:none}.inst-bar .btn{padding:7px 10px;font-size:12.5px}}
 
+/* ===== نسخه ۱۳ ===== */
+.inst-warn{padding:10px 12px;border-radius:12px;background:rgba(245,158,11,.14);color:#92400e;font-size:13px;font-weight:700;line-height:1.8;margin:10px 0}
+[data-theme="dark"] .inst-warn{color:#fcd34d}
+#inst-now:not(:empty){margin-top:12px}
+.gm-away{position:absolute;z-index:7;top:10px;left:50%;transform:translateX(-50%);width:max-content;max-width:92%;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;padding:9px 16px;border-radius:16px;color:#fff;background:rgba(15,23,42,.88);box-shadow:0 12px 30px -12px rgba(0,0,0,.6);font-size:12.5px;animation:fabIn .3s var(--ease)}
+.gm-away b{font-size:13.5px}.gm-away em{font-style:normal;font-weight:900;color:#fde047}
+.back-bar{position:fixed;z-index:70;top:88px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);display:flex;align-items:center;gap:12px;padding:9px 10px 9px 16px;border-radius:18px;color:#fff;background:linear-gradient(120deg,#1d4ed8,#0ea5a4);box-shadow:0 16px 36px -14px rgba(29,78,216,.8);animation:fabIn .35s var(--ease)}
+.back-bar[hidden]{display:none}.back-bar.low{background:linear-gradient(120deg,#dc2626,#f97316)}
+.back-bar .bb-t{font-size:13px;font-weight:700}.back-bar .btn{background:#fff;color:#1d4ed8;flex-shrink:0}
+@media (max-width:600px){.back-bar{top:auto;bottom:calc(150px + env(safe-area-inset-bottom,0px));flex-direction:column;gap:8px;text-align:center;padding:10px 14px}}
+.m-del{font-style:italic;color:var(--muted);font-size:13.5px}
+.bub.t-del{opacity:.85}
+
 </style>
 </head>
 <body>
@@ -3124,6 +3138,7 @@ function renderMessages(forceBottom) {
       const day = new Date(m.createdAt).toLocaleDateString('fa-IR');
       if (day !== lastDay) { html += `<div class="c-day">${day}</div>`; lastDay = day; prevFrom = ''; }
       if (m.from && m.from !== me() && isBlocked(m.from)) continue;
+      if (typeof msgHidden === 'function' && msgHidden(m)) continue;
       if (m.type === 'sys') { html += `<div class="c-sys">${esc(m.text)}</div>`; prevFrom = ''; continue; }
       const mine = m.from === me(), showHead = isG && !mine && m.from !== prevFrom;
       const who = isG && !mine ? memberView(g || {}, m.from) : null;
@@ -5387,7 +5402,10 @@ const ENG = {
   chess: {
     input: 'tap', make: chMake, apply: chApplyMove, tap: chTap, ai: chAI, draw: chDraw,
     hint: 'مهره‌ات را لمس کن تا خانه‌های مجاز سبز شوند، بعد خانه مقصد را بزن. سفید اول حرکت می‌کند.',
-    timeout: (o, V) => ({ event: { type: 'timeout', team: V.turn }, score: V.score.slice(), turn: V.turn, state: V.st, finished: true, winner: 1 - V.turn, reason: 'timeout' }),
+    timeout: (o, V) => {                                   // وقت تمام شد: حرکت خودکار و نوبت به حریف می‌رسد
+      let r = null; try { const m = chAI(o, V, V.turn); if (m) r = chApplyMove(o, V, m); } catch (e) {}
+      return r || { event: { type: 'timeout', team: V.turn }, score: V.score.slice(), turn: V.turn, state: V.st, finished: true, winner: 1 - V.turn, reason: 'timeout' };
+    },
     side: (o, t) => colorSide[t],
     goal: V => V.st.check >= 0 ? 'کیش!' : `${colorSide[V.turn]} حرکت می‌کند`,
     lock: () => 240, aiDelay: () => 350,
@@ -5601,7 +5619,7 @@ function arcMatchLine(m) {
   else if (m.status === 'active') { sub = `${(m.turn === myT ? 'نوبت توست' : 'نوبت حریف')}، ${meta}`; right = `<button class="btn btn-pri sm" data-act="arc-open" data-id="${esc(m.id)}">${I.pad} ادامه بازی</button>`; }
   else {
     const res = m.winner === null || m.winner === undefined ? 'مساوی 🤝' : m.winner === myT ? 'بردی 🏆' : 'باختی';
-    sub = m.status === 'declined' ? 'دعوت رد شد' : m.status === 'finished' ? `${res}${m.endReason === 'forfeit' ? ' (ترک بازی)' : m.endReason === 'timeout' ? ' (اتمام وقت)' : ''}، ${meta}` : meta;
+    sub = m.status === 'declined' ? 'دعوت رد شد' : m.status === 'finished' ? `${res}${m.endReason === 'forfeit' ? ' (ترک بازی)' : m.endReason === 'abandon' ? ' (خروج بیش از ۲ دقیقه)' : m.endReason === 'timeout' ? ' (اتمام وقت)' : ''}، ${meta}` : meta;
     right = `<button class="icon-btn xs" data-act="arc-del" data-id="${esc(m.id)}" title="حذف" aria-label="حذف">${I.trash}</button>`;
   }
   const scoreHTML = (m.status === 'active' || m.status === 'finished') && m.game !== 'chess' ? `<span class="arc-score" dir="ltr">${sc[1 - myT]} : ${sc[myT]}</span>` : '';
@@ -5968,7 +5986,7 @@ function createGame(o) {
     if (window.onGameEnd && !watch) try { onGameEnd(o, V, winner, reason); } catch (e) { console.warn(e); }
     if (window.sfx) sfx(draw ? 'pop' : iWon === false ? 'lose' : 'win');
     const title = draw ? 'مساوی شد 🤝' : iWon === null ? `${o.names[winner]} برد! 🏆` : iWon ? 'بردی! 🏆' : 'باختی 😕';
-    const why = reason === 'forfeit' ? (iWon ? 'حریف بازی را ترک کرد.' : 'بازی را ترک کردی.') : reason === 'timeout' ? 'وقت حرکت تمام شد.' : '';
+    const why = reason === 'forfeit' ? (iWon ? 'حریف تسلیم شد.' : 'تسلیم شدی.') : reason === 'abandon' ? (iWon ? 'حریف بیش از ۲ دقیقه از بازی بیرون ماند.' : 'بیش از ۲ دقیقه از بازی بیرون ماندی.') : reason === 'timeout' ? 'وقت حرکت تمام شد.' : '';
     box.innerHTML = `<div class="gm-over-card"><div class="gm-cup">${draw ? '🤝' : iWon === false ? '🥈' : '🏆'}</div><h2>${esc(title)}</h2>
       ${o.game !== 'chess' ? `<p dir="ltr" class="gm-final">${V.score[topT]} : ${V.score[bottomT]}</p>` : ''}
       ${why ? `<p class="muted small">${why}</p>` : ''}
@@ -6082,6 +6100,43 @@ function createGame(o) {
     applyDoc(d);
   };
   api.onGone = () => { toast('این بازی دیگر وجود ندارد.', 'err'); closeGame(); };
+
+  /* ----- قانون ۲ دقیقه: بازیکنی که از بازی بیرون برود ۲ دقیقه فرصت برگشت دارد ----- */
+  const AWAY_MS = 120000, HB_MS = 20000, STALE_MS = 50000, myAw = 'aw' + o.myTeam, opAw = 'aw' + (1 - o.myTeam), myHb = 'hb' + o.myTeam, opHb = 'hb' + (1 - o.myTeam);
+  const openedAt = Date.now(); let lastHb = 0, claiming = false;
+  function awayShow(left) {
+    let el = root.querySelector('#gm-away');
+    if (left === null) { if (el) el.remove(); return; }
+    if (!el) { const st = root.querySelector('#gm-stage'); if (!st) return; st.insertAdjacentHTML('beforeend', '<div class="gm-away" id="gm-away"></div>'); el = root.querySelector('#gm-away'); }
+    const s = Math.ceil(left / 1000), t = fa(Math.floor(s / 60)) + ':' + fa(s % 60).padStart(2, '۰');
+    el.innerHTML = `<b>🚪 حریف از بازی بیرون رفته</b><span>اگر تا <em dir="ltr">${t}</em> برنگردد، تو برنده می‌شوی</span>`;
+  }
+  function awayTick() {
+    if (!online || watch || GV !== api || V.status !== 'active' || !V.doc || V.doc.status !== 'active') { awayShow(null); return; }
+    const d = V.doc, now = Date.now();
+    if (!document.hidden && (now - lastHb > HB_MS || d[myAw])) {            // من در بازی هستم: ضربان و پاک کردن وضعیت «بیرون»
+      lastHb = now; const patch = { [myHb]: now }; if (d[myAw]) patch[myAw] = 0;
+      DB.gUpdate('matches', o.matchId, patch).catch(() => {});
+    }
+    if (document.hidden) { awayShow(null); return; }
+    let since = d[opAw] || 0; const hb = d[opHb] || 0;
+    if (!since && hb && now - hb > STALE_MS) since = hb;                   // اینترنت یا برنامه حریف قطع شده
+    if (!since && !hb && now - openedAt > 30000) since = openedAt + 30000;  // حریف اصلاً وارد بازی نشده
+    if (!since) { awayShow(null); return; }
+    const left = AWAY_MS - (now - since);
+    if (left > 0) { awayShow(left); return; }
+    awayShow(null);
+    if (claiming) return; claiming = true;
+    DB.gUpdate('matches', o.matchId, { status: 'finished', winner: o.myTeam, endReason: 'abandon', seq: V.seq + 1, shot: null, updatedAt: Date.now() })
+      .catch(() => {}).finally(() => { setTimeout(() => { claiming = false; }, 5000); });
+  }
+  const awIv = online && !watch ? setInterval(awayTick, 1000) : 0;
+  const visAway = () => {                                  // بستن برنامه یا رفتن به برنامه دیگر
+    if (!online || watch || GV !== api || V.status !== 'active' || !V.doc || V.doc.status !== 'active') return;
+    if (document.hidden) DB.gUpdate('matches', o.matchId, { [myAw]: Date.now() }).catch(() => {});
+    else { lastHb = 0; awayTick(); }
+  };
+  document.addEventListener('visibilitychange', visAway);
   function shoot(shot) {
     if (online) {
       V.playedShot = V.seq + 1; V.busy = true;
@@ -6170,17 +6225,18 @@ function createGame(o) {
       lastHud = t; hud();
       if (online && V.status === 'active' && V.st && !V.hold && !V.sim && !V.busy && !V.passing && V.doc && V.doc.state && !V.doc.shot && V.doc.status === 'active') {
         const left = sec() - (Date.now() - V.turnAt) / 1000;
-        if ((left <= 0 && V.turn === o.myTeam) || left <= -10) pass();
+        if ((left <= 0 && V.turn === o.myTeam) || left <= -4) pass();
       }
     }
     try { draw(t); } catch (er) { console.error(er); }
   }
-  $('#gm-x').onclick = async () => {
-    if (online && !watch && V.status === 'active') {
-      if (!await confirmBox('اگر بازی را ترک کنی، حریف برنده می‌شود.', 'ترک بازی')) return;
-      try { await DB.gUpdate('matches', o.matchId, { status: 'finished', winner: 1 - o.myTeam, endReason: 'forfeit', seq: V.seq + 1, shot: null, updatedAt: Date.now() }); } catch (e) {}
-    }
-    closeGame();
+  $('#gm-x').onclick = () => {
+    if (!(online && !watch && V.status === 'active' && V.doc && V.doc.status === 'active')) return closeGame();
+    openModal(`<h2>خروج از بازی</h2><p class="muted" style="margin:-6px 0 14px;line-height:1.9">اگر خارج شوی فقط <b>۲ دقیقه</b> فرصت داری به بازی برگردی؛ وگرنه باخت برایت ثبت می‌شود و حریف برنده می‌شود.</p>
+      <div class="m-foot" style="flex-wrap:wrap"><button class="btn btn-pri" data-close>ادامه بازی</button><button class="btn btn-ghost" id="gx-away">⏳ خروج موقت</button><button class="btn btn-danger" id="gx-ff">🏳️ تسلیم</button></div>`, m => {
+      m.querySelector('#gx-away').onclick = () => { closeModal(); V.leftMarked = true; DB.gUpdate('matches', o.matchId, { [myAw]: Date.now() }).catch(() => {}); closeGame(); toast('۲ دقیقه فرصت داری به بازی برگردی ⏳'); };
+      m.querySelector('#gx-ff').onclick = async () => { closeModal(); V.leftMarked = true; try { await DB.gUpdate('matches', o.matchId, { status: 'finished', winner: 1 - o.myTeam, endReason: 'forfeit', seq: V.seq + 1, shot: null, updatedAt: Date.now() }); } catch (e) {} closeGame(); };
+    });
   };
   $('#gm-help').onclick = () => showHint(7000);
   const openLastRp = () => { if (V.reps && V.reps.length) openReplay(o.game, V.reps[V.reps.length - 1], o); };
@@ -6201,6 +6257,11 @@ function createGame(o) {
   cv.addEventListener('pointerdown', () => { if (!box.hidden) box.hidden = true; if (!emos.hidden) emos.hidden = true; }, true);
   window.addEventListener('resize', resize);
   api.destroy = () => { if (cheerUn) try { cheerUn(); } catch (e) {} if (window.presenceSet) presenceSet(null); if (o.onClose) o.onClose(); cancelAnimationFrame(V.raf); clearTimeout(V.fb); clearTimeout(V.aiT); clearTimeout(botT); clearTimeout(hintT); window.removeEventListener('resize', resize); };
+  { const d0 = api.destroy; api.destroy = () => {
+      clearInterval(awIv); document.removeEventListener('visibilitychange', visAway);
+      if (online && !watch && !V.leftMarked && V.status === 'active' && V.doc && V.doc.status === 'active') DB.gUpdate('matches', o.matchId, { [myAw]: Date.now() }).catch(() => {});
+      d0();
+    }; }
   api.V = V; api.doMove = doMove; api.shoot = shoot; api.o = o; api.watch = watch;
   GV = api;
   resize();
@@ -7623,6 +7684,7 @@ function voiceDur(s) { s = Math.round(s || 0); return fa(Math.floor(s / 60)) + '
 function msgBodyHTML(m, path) {
   const cap = m.text ? `<p dir="auto">${linkify(esc(showText(m.text)))}</p>` : '';
   const mid = esc(m.id);
+  if (m.del) return `<p class="m-del">🚫 ${m.from === me() ? 'این پیام را حذف کردی' : 'این پیام حذف شد'}</p>`;
   if (m.type === 'sticker' && typeof stickerHTML === 'function') return stickerHTML(m.st);
   if (m.type === 'img' && m.img) return (LITE() && !m._show ? `<button class="m-load" data-x="img-load" data-mid="${mid}">🖼️ نمایش تصویر</button>` : `<img class="m-img" src="${esc(m.img)}" alt="" data-x="img-view" data-mid="${mid}" loading="lazy">`) + cap;
   if (m.type === 'voice' && m.au) return `<div class="m-voice" data-mid="${mid}"><button class="vp" data-x="vplay" data-mid="${mid}" aria-label="پخش">▶</button><i class="vw">${'<i></i>'.repeat(22)}</i><small>${voiceDur(m.dur)}</small></div>`;
@@ -9330,8 +9392,8 @@ XA['bl-list'] = () => {
 XA['bl-un'] = el => safe(async () => { await unblockUser(el.dataset.uid); closeModal(); if (S.page === 'profile') renderProfile(); });
 
 /* ---------- نصب اپ (PWA) ---------- */
-let PWA_EV = null;
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); PWA_EV = e; });
+let PWA_EV = window.__bip || null;              // رویداد نصب ممکن است قبل از این اسکریپت (در head) گرفته شده باشد
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); PWA_EV = e; window.__bip = e; });
 window.addEventListener('appinstalled', () => { PWA_EV = null; toast('GameCenter نصب شد 🎉'); });
 function registerSW() {
   if (!('serviceWorker' in navigator) || !/^https:$/.test(location.protocol) && !/^localhost$|^127\./.test(location.hostname)) return;
@@ -10803,27 +10865,41 @@ const devKind = () => { const u = navigator.userAgent || ''; return /iphone|ipad
 const INST_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M12 7v7m-3-3 3 3 3-3M10 18h4"/></svg>';
 
 /* پنجره نصب با راهنمای اندروید / آیفون / کامپیوتر */
+const inAppBrowser = () => /FBAN|FBAV|Instagram|Telegram|TelegramBot|WhatsApp|Line\/|; wv\)|MicroMessenger|Snapchat|Twitter|GSA\//i.test(navigator.userAgent || '');
+const chromeIntent = () => { const u = location.href.split('#')[0]; return 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u) + ';end'; };
+async function instPrompt() {                     // پنجره نصب خود مرورگر (اندروید / کروم / اج)
+  const ev = PWA_EV || window.__bip; if (!ev) return false;
+  PWA_EV = null; window.__bip = null;
+  try { await ev.prompt(); } catch (e) { return false; }
+  let ok = false; try { ok = (await ev.userChoice).outcome === 'accepted'; } catch (e) {}
+  if (ok) { try { localStorage.setItem('gc_inst_x', '1'); } catch (e) {} closeModal(); toast('در حال نصب GameCenter… آیکونش روی صفحه اصلی گوشی می‌آید 🎉'); instRefresh(); }
+  else toast('نصب لغو شد؛ هر وقت خواستی دوباره «دانلود اپ» را بزن.');
+  return true;
+}
 XA['install'] = async () => {
   if (isStandalone()) return toast('GameCenter روی این دستگاه نصب شده است ✓');
-  if (PWA_EV) {                                    // اندروید و کروم کامپیوتر: پنجره نصب خود مرورگر
-    PWA_EV.prompt(); let ok = false; try { ok = (await PWA_EV.userChoice).outcome === 'accepted'; } catch (e) {} PWA_EV = null;
-    if (ok) { try { localStorage.setItem('gc_inst_x', '1'); } catch (e) {} const b = $('#inst-bar'); if (b) b.remove(); }
-    return;
-  }
+  if (await instPrompt()) return;
   let tab = devKind();
+  const inApp = inAppBrowser(), https = location.protocol === 'https:';
   const G = {
-    android: ['🤖 اندروید', `<ol class="inst"><li>سایت را در <b>Chrome</b> باز کن (نه داخل اینستاگرام یا تلگرام).</li><li>منوی <b>⋮</b> بالای صفحه را بزن.</li><li><b>Install app</b> یا <b>Add to Home screen</b> (افزودن به صفحه اصلی) را بزن.</li><li><b>Install</b> را تأیید کن؛ آیکون GameCenter مثل یک اپ روی گوشی می‌آید.</li></ol>`],
+    android: ['🤖 اندروید', inApp
+      ? `<div class="inst-warn">⚠️ الان سایت داخل برنامه‌ای مثل تلگرام یا اینستاگرام باز است و این برنامه‌ها اجازه نصب نمی‌دهند.</div><a class="btn btn-pri wide" href="${esc(chromeIntent())}">🌐 باز کردن در Chrome</a><p class="muted small" style="margin-top:8px">بعد از باز شدن در Chrome، دوباره «دانلود اپ» را بزن.</p>`
+      : `<div id="inst-now"></div><ol class="inst"><li>سایت را در <b>Chrome</b> باز کن.</li><li>منوی <b>⋮</b> (سه نقطه بالا سمت راست) را بزن.</li><li><b>نصب برنامه / Install app</b> را بزن. اگر نبود، <b>افزودن به صفحه اصلی / Add to Home screen</b> و بعد <b>نصب / Install</b> را بزن.</li><li>آیکون GameCenter در صفحه اصلی و لیست برنامه‌های گوشی می‌آید.</li></ol>
+        <p class="muted small">در مرورگر سامسونگ: منوی ☰ پایین صفحه، سپس <b>Add page to</b> و <b>Home screen</b>.</p>`],
     ios: ['🍎 آیفون', `<ol class="inst"><li>سایت را در <b>Safari</b> باز کن.</li><li>دکمه <b>Share</b> (مربع با فلش رو به بالا) پایین صفحه را بزن.</li><li>کمی پایین برو و <b>Add to Home Screen</b> را بزن.</li><li>بالا سمت راست <b>Add</b> را بزن.</li></ol>`],
-    desktop: ['💻 کامپیوتر', `<ol class="inst"><li>سایت را در <b>Chrome</b> یا <b>Edge</b> باز کن.</li><li>در نوار آدرس، آیکون <b>نصب</b> (مانیتور با فلش) را بزن؛ یا از منوی <b>⋮</b> گزینه <b>Install GameCenter</b> را انتخاب کن.</li><li><b>Install</b> را بزن؛ GameCenter در یک پنجره جدا مثل برنامه باز می‌شود.</li></ol>`]
+    desktop: ['💻 کامپیوتر', `<div id="inst-now"></div><ol class="inst"><li>سایت را در <b>Chrome</b> یا <b>Edge</b> باز کن.</li><li>در نوار آدرس، آیکون <b>نصب</b> (مانیتور با فلش) را بزن؛ یا از منوی <b>⋮</b> گزینه <b>Install GameCenter</b> را انتخاب کن.</li><li><b>Install</b> را بزن؛ GameCenter در یک پنجره جدا مثل برنامه باز می‌شود.</li></ol>`]
   };
-  openModal(`<div class="inst-hero"><span class="inst-ic">${INST_ICON}</span><div><h2 style="margin:0">دانلود وب‌اپ GameCenter</h2><p class="muted small">بدون فروشگاه اپ، بدون حجم زیاد؛ تمام‌صفحه، با آیکون روی صفحه اصلی و اعلان.</p></div></div>
+  openModal(`<div class="inst-hero"><span class="inst-ic">${INST_ICON}</span><div><h2 style="margin:0">دانلود وب‌اپ GameCenter</h2><p class="muted small">بدون فروشگاه اپ و بدون حجم زیاد؛ تمام‌صفحه، با آیکون روی صفحه اصلی و اعلان.</p></div></div>
+    ${https ? '' : '<div class="inst-warn">⚠️ نصب فقط وقتی سایت با https (مثل آدرس netlify.app) باز شده باشد ممکن است.</div>'}
     <div class="seg" id="inst-t">${Object.entries(G).map(([k, v]) => `<button data-k="${k}" class="${k === tab ? 'on' : ''}">${v[0]}</button>`).join('')}</div>
     <div id="inst-b"></div>
     <ul class="inst-perks"><li>⚡ باز شدن سریع و کار با اینترنت ضعیف</li><li>🔔 اعلان پیام و دعوت بازی</li><li>📱 تمام‌صفحه، بدون نوار مرورگر</li><li>🔄 همیشه به‌روز؛ نیازی به دانلود دوباره نیست</li></ul>
     <div class="m-foot"><button class="btn btn-ghost" data-close>باشه</button></div>`, m => {
-    const draw = () => { m.querySelector('#inst-b').innerHTML = G[tab][1]; m.querySelectorAll('#inst-t [data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === tab)); };
+    const now = () => { const b = m.querySelector('#inst-now'); if (b) b.innerHTML = (PWA_EV || window.__bip) ? `<button class="btn btn-pri wide" id="inst-go">📲 نصب همین حالا</button>` : ''; const g = m.querySelector('#inst-go'); if (g) g.onclick = () => instPrompt(); };
+    const draw = () => { m.querySelector('#inst-b').innerHTML = G[tab][1]; m.querySelectorAll('#inst-t [data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === tab)); now(); };
     m.querySelectorAll('#inst-t [data-k]').forEach(b => b.onclick = () => { tab = b.dataset.k; draw(); });
     draw();
+    const iv = setInterval(() => { if (!m.isConnected) return clearInterval(iv); if ((PWA_EV || window.__bip) && !m.querySelector('#inst-go')) now(); }, 700);
   });
 };
 window.addEventListener('beforeinstallprompt', () => setTimeout(instRefresh, 50));
@@ -10874,6 +10950,68 @@ function cardFabTick() {
   if (f.hidden === show) f.hidden = !show;
 }
 setInterval(cardFabTick, 400);
+
+/* =====================================================================
+   نسخه ۱۳: ۳۰ ثانیه برای هر نوبت، یادآور برگشت به بازی، حذف پیام در چت
+   ===================================================================== */
+const TURN_LIMIT = 30;
+GAMES.forEach(g => { ARC.TURN_SEC[g] = TURN_LIMIT; if (GM[g]) GM[g].sec = TURN_LIMIT; });
+
+/* ---------- یادآور: «۲ دقیقه فرصت داری به بازی برگردی» ---------- */
+document.body.insertAdjacentHTML('beforeend', '<div class="back-bar" id="back-bar" hidden></div>');
+function backTick() {
+  const bar = $('#back-bar'); if (!bar) return;
+  let m = null, left = 0;
+  if (S.user && !GV) {
+    const now = Date.now();
+    (SO.matches || []).forEach(x => {
+      if (x.status !== 'active' || x.v !== 2) return;
+      const t = x.host === me() ? 0 : x.guest === me() ? 1 : -1; if (t < 0) return;
+      const aw = x['aw' + t]; if (!aw) return;
+      const l = 120000 - (now - aw); if (l > 0 && (!m || l < left)) { m = x; left = l; }
+    });
+  }
+  if (!m) { if (!bar.hidden) bar.hidden = true; return; }
+  const s = Math.ceil(left / 1000), t = fa(Math.floor(s / 60)) + ':' + fa(s % 60).padStart(2, '۰');
+  const nm = (ARC.NAMES[m.game] || 'بازی'), html = `<span class="bb-t">⏳ <b dir="ltr">${t}</b> فرصت داری به ${esc(nm)} برگردی؛ وگرنه باخت ثبت می‌شود</span><button class="btn btn-pri sm" data-act="arc-open" data-id="${esc(m.id)}">برگشت به بازی</button>`;
+  if (bar.dataset.h !== html) { bar.innerHTML = html; bar.dataset.h = html; }
+  bar.hidden = false; bar.classList.toggle('low', left < 30000);
+}
+setInterval(backTick, 1000);
+
+/* ---------- حذف پیام: برای همه (فقط پیام خودم) یا فقط برای من ---------- */
+const msgHidden = m => !!(m && Array.isArray(m.hid) && S.user && m.hid.includes(me()));
+function chatDocOf(c) { return c.kind === 'dm' ? (SO.dms || []).find(x => x.id === c.id) : (SO.groups || []).find(x => x.id === c.id); }
+async function delForAll(c, m) {
+  await DB.gUpdate(chatPath(c), m.id, { del: true, type: 'del', text: '', img: '', audio: '', st: '', q: '', opts: [], votes: {}, rx: {}, delAt: Date.now() });
+  const cd = chatDocOf(c);                                  // اگر آخرین پیام بود، پیش‌نمایش لیست چت هم عوض شود
+  if (cd && (cd.lastAt || 0) <= (m.createdAt || 0) + 2000) {
+    const p = { lastText: '🚫 پیام حذف شد' };
+    try { if (c.kind === 'dm') await DB.gMerge('dms', c.id, p); else await DB.gUpdate('groups', c.id, p); } catch (e) {}
+  }
+}
+function delForMe(c, m) { return DB.gUpdate(chatPath(c), m.id, { hid: { __union: [me()] } }); }
+XA['m-act'] = el => {
+  const m = msgById(el.dataset.mid), c = SO.chat; if (!m || !c) return;
+  const mine = m.from === me(), who = personInfo(m.from), dead = !!m.del;
+  openModal(`<div class="m-acts">${dead ? '' : `<div class="rx-pick">${['❤️', '😂', '😮', '😢', '👍', '🔥', '👏', '🙏'].map(e => `<button data-e="${e}" class="${(m.rx || {})[me()] === e ? 'on' : ''}">${e}</button>`).join('')}</div>`}
+    ${m.text && !dead ? `<button class="ma" id="ma-copy">${I.copy} کپی متن</button>` : ''}
+    ${mine && !dead ? `<button class="ma danger" id="ma-all">${I.trash} حذف برای همه</button>` : ''}
+    <button class="ma ${mine ? '' : 'danger'}" id="ma-me">🙈 حذف فقط برای من</button>
+    ${!mine && !dead ? `<button class="ma" id="ma-rep">🚩 گزارش این پیام</button><button class="ma danger" id="ma-block">⛔ مسدود کردن ${esc(who.name)}</button>` : ''}
+    <button class="ma" data-close>انصراف</button></div>`, md => {
+    md.querySelectorAll('.rx-pick button').forEach(b => b.onclick = () => { closeModal(); toggleRx(m.id, b.dataset.e); });
+    const q = s => md.querySelector(s);
+    if (q('#ma-copy')) q('#ma-copy').onclick = () => { closeModal(); copyText(m.text); };
+    if (q('#ma-rep')) q('#ma-rep').onclick = () => openReport({ kind: 'msg', uid: m.from, path: chatPath(c), mid: m.id, text: m.text || (m.type ? '[' + m.type + ']' : '') });
+    if (q('#ma-block')) q('#ma-block').onclick = () => { closeModal(); blockUser(m.from, who.name); };
+    if (q('#ma-all')) q('#ma-all').onclick = async () => {
+      if (!await confirmBox('این پیام برای تو و همه طرف‌های گفتگو حذف می‌شود.', 'حذف برای همه')) return;
+      delForAll(c, m).then(() => toast('پیام برای همه حذف شد')).catch(e => toast(e.message, 'err'));
+    };
+    q('#ma-me').onclick = () => { closeModal(); delForMe(c, m).then(() => { toast('پیام فقط برای تو حذف شد'); renderMessages(); }).catch(e => toast(e.message, 'err')); };
+  });
+};
 
 /* ---------------- رویدادهای سراسری ---------------- */
 if (window.matchMedia && matchMedia('(hover: hover)').matches) {

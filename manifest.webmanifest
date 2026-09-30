@@ -1,24 +1,79 @@
 {
+  "id": "./",
   "name": "GameCenter",
   "short_name": "GameCenter",
-  "description": "گاوصندوق اکانت بازی‌ها، هم‌بازی‌یابی، چت و ۱۷ بازی آنلاین",
+  "description": "بازی آنلاین، لیگ و تورنومنت، کلن، چت و گاوصندوق اکانت بازی‌ها",
   "lang": "fa",
   "dir": "rtl",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#060b18",
   "theme_color": "#1d4ed8",
-  "categories": ["games", "social", "entertainment"],
+  "prefer_related_applications": false,
+  "categories": [
+    "games",
+    "social",
+    "entertainment"
+  ],
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "بازی آنلاین", "url": "./#p=arcade" },
-    { "name": "باشگاه", "url": "./#p=club" },
-    { "name": "چت", "url": "./#p=social" }
+    {
+      "name": "بازی آنلاین",
+      "url": "./#p=arcade",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "باشگاه",
+      "url": "./#p=club",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "چت",
+      "url": "./#p=social",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }
