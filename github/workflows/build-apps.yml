@@ -1,0 +1,229 @@
+# ساخت اپلیکیشن GameCenter برای اندروید، ویندوز، مک، لینوکس و آیفون
+# این فایل را در مخزن گیت‌هاب در مسیر  .github/workflows/build-apps.yml  بگذار.
+# هر بار که این فایل ذخیره شود (یا از تب Actions دکمه Run workflow زده شود) همه اپ‌ها ساخته
+# و در بخش Releases مخزن منتشر می‌شوند.
+name: Build GameCenter apps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/build-apps.yml'
+      - 'icon-512.png'
+
+permissions:
+  contents: write
+
+env:
+  APP_URL: https://gamecenter-ir.netlify.app
+  APP_ID: ir.gamecenter.app
+  APP_NAME: GameCenter
+  KS_PASS: df5bde1f59ecfc848808e615
+  KS_B64: /u3+7QAAAAIAAAABAAAAAQAKZ2FtZWNlbnRlcgAAAaDyhMeVAAAE/zCCBPswDAYKKwYBBAEqAhEBAQSCBOkKr8Bf4AieydPRNAl2VA87kGjdBOkvWJ8IA82n/FAqIaKYSQSax/80F9pqCUuhgnUkkW2mtLOMSpdDu2axiEs4MpqaQcSVBHfat+qhUUJXp1AUszouE3/SXmFLAbVvP+e6GSn+dE0oWYQglqdYc8JCuOm/JgHn2imZZLAR1JGukRdxDe46MGai4Ip0cS+fOSykDUBSdINbQILDfwu4iQWuv3HMOPnn2l0gJi0tT/jo4aj+K6MOoAJbrWVdO5FG7UKNXFiun79/1wN4HXCCxlxNQypo4DcPsm61C9uaZKLf5bLoAL3Juw43kfoIZmMawjBP+RvYhsS07IiYZBn699ouDurVExT4KGMsWq6pCNSdIadiJbApyC7POChFZykAQtnDsw14P9PGUswJlUnWo5OwHz4O54Ihg+w5+O0slDcJGWFyRuiCN4LoTUA7wquJkhuWLuNjn8/19vXkl0x8Pv7MLqSRr6sR2cbJjw3dfwNNU9EgvDvACzNcwYFXnOqimoKQaDC7I8g7rtD4L9zTaU6iyf06VlwOtQGvb3bJwc+0rcW3yEWu/1WbTAC1HdEM027tjYsbH1XTvkw1axPBPwwQlne5N85p8eTFaGms+4pkdqLhGeGE/JE/VrwCycZdW+grPzmZYBde2Fviuq3L/Jb+nU1fV2/MHyFMNHdjufb6FUZ2mmnwS5KIURC6vmslgMfNy65AA5GJ/qTJLxS+TT9HT+5sk77eOprzmg/lIgI4xxtMA7iI4FsfaiX4k8FE2WZjIXu+wJP+GgR0Va/DoyzGoE2LEY7X3pdNmrEcDYrm1/8h8aGlV1ZkfouuUAVtI5e9QrGXHy8Zj6FwdooD/GGpA6F4IhfjpEBNfLFsWuqgE9TnoGveZZQatMx1yK2U7hWHyllWtSHnXdJl7WHZs0GX4FpCbCwRVZlVC+aGsfMHg8R5vLtJiR+peCAJDKfkmcfms1AtuZ3gupR1P19NJ3StRCoZ5JhoQq4RpWszi7ASL6SNfmSfqPIe7oQglhTL6XS3hvOxN5fjqL7ZdxhtuG6bixpbViSdQcNhKpSp5skum64G0AHuxsAJ6s5/ScIOsMrIHOTMXyK7FEP0XH7sYoyT52G+kFRz6goiwCXUoO5rs898QqNpGVCb4/ELclMfXFGYxMlywD2nH48w5m25y5y/cME5g7HRtk92a8LeUzO8z8kF1EjgNR3Y4/vnCn67n76BeDpcSTO7OAIqKlezeL8isXEc8Q1DzrW5Im5fVwNNfTPNocRKwZJf22kk9+qvLwqY6pJoRUD4KqyUgvBhL22Kp/JEcGeTV7IdYSBPgngICMjEe618ZajBt4TdJgM67Obpj4oEEVdEC6e65zY14Ub3hNGFP9ymDGYRwRLkIDR1tDcQLEffA0EWmzf80/ypEVI5/980m8j3d2AU69k/8FvA5As40Rv3ms3Ei5o6gAQlAHU58OzMinJSGYxIsi3zcfVUWu/RTFEJL/N3doy8Ym8zo18Ro2o5VHrqp4B5r8thmzJPk6ETD79M6HhrnCixpAX3K3TOgqyOhUVCZwcV1IH830HauMtMCoThO4X9cdOWMU3k4fAuujetGoQFXro85eAiTN0wUW6J9uzs6NwJuMlXQa1yRs7rEqmQM9icourKG1vRLtsqtAlp7EKTBEkOaEmpgEg5vfUvWoIAAAABAAVYLjUwOQAAAxcwggMTMIIB+6ADAgECAggZDjIq91aV1TANBgkqhkiG9w0BAQwFADA3MQswCQYDVQQGEwJJUjETMBEGA1UEChMKR2FtZUNlbnRlcjETMBEGA1UEAxMKR2FtZUNlbnRlcjAgFw0yNjA5MzAxMzMzMDNaGA8yMDU5MDgwODEzMzMwM1owNzELMAkGA1UEBhMCSVIxEzARBgNVBAoTCkdhbWVDZW50ZXIxEzARBgNVBAMTCkdhbWVDZW50ZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCr65blYdOreVFgk5T98YSBwOs67QplEpJ5ZhQRXXGocvQ4j5qZ50NF5Pc/GqWAnGIoR6HoATKnr78P3hGHuPL14ul7YP4opd1+u7qCTgiGSafaZvvOdUvRZL7wwa+IDNm3CtoMiTwCyDt8FicfntwO7uqNjDePBbVemLgsxZOcIeXB8gjBXQUDkxMEFkp8hK7y+rZn7U9FCIZf2A6ofjuz6ITrXj0H017XfWuuJpcUc4G7MVlpCDJbmRvXDk+YsaNub4LtbFfvrY/6H+tQfsdBurp0CHfQn5fa7IDy0GGcPdH6zOJaQyPlnftWXyahui0lwyQA2qOim1xTogJe1FNFAgMBAAGjITAfMB0GA1UdDgQWBBSmKIbZkzfjHZVpBrW6//5NJzDeJjANBgkqhkiG9w0BAQwFAAOCAQEAJo6AyOHBbxASAwqBsp00WdrBDKpoHRUPLq1sH5Nw4B9+ZYAUW6wVSiFgnkxiqUTk7MT1BDywM4KwBPymkRI2im0wSAsy9W8ZWH2kj5T2pg1axeYxunY+dIGaJ5lNzIZpkHIHft2v3SMAF9h6il8mjPe6wubJogq8I3Mk1Ahie8k+z29GDgyRxpikY+P8PjNb3WCS+90LOxXooxrrLzmGcGNpq7YRZc8aR5HZ8Gv98fWAEmETAnSv8r/OShIZyKZYeR/LkDxIMBf7Lu+fU5djMneIAW6+KM5G+lQbjjUXFELTTWE32TLPFoDmu3d99kwuV3cXJg/jHOxC9IM9cnMfZRbNKmOmU435DPUqKH54CNfnHaOe
+
+jobs:
+  # ---------------------------------------------------------------- اندروید (APK)
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: android-actions/setup-android@v3
+      - name: Create Capacitor project
+        run: |
+          mkdir cap && cd cap
+          npm init -y > /dev/null
+          npm i @capacitor/core@6.2.0 @capacitor/cli@6.2.0 @capacitor/android@6.2.0
+          mkdir www && cp ../index.html www/index.html
+          cat > capacitor.config.json <<JSON
+          {
+            "appId": "$APP_ID",
+            "appName": "$APP_NAME",
+            "webDir": "www",
+            "appendUserAgent": "GameCenterApp",
+            "backgroundColor": "#060b18",
+            "server": { "url": "$APP_URL", "cleartext": false },
+            "android": { "allowMixedContent": false }
+          }
+          JSON
+          npx cap add android
+      - name: Icons, permissions, version
+        run: |
+          pip install --quiet pillow
+          python3 - <<'PY'
+          from PIL import Image
+          import os, glob, shutil
+          src = Image.open('icon-512.png').convert('RGBA')
+          res = 'cap/android/app/src/main/res'
+          sizes = {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}
+          for d, s in sizes.items():
+              folder = f'{res}/mipmap-{d}'
+              os.makedirs(folder, exist_ok=True)
+              img = src.resize((s, s), Image.LANCZOS)
+              for n in ('ic_launcher.png', 'ic_launcher_round.png', 'ic_launcher_foreground.png'):
+                  img.save(f'{folder}/{n}')
+          shutil.rmtree(f'{res}/mipmap-anydpi-v26', ignore_errors=True)
+          sp = f'{res}/drawable/splash.png'
+          if os.path.exists(sp):
+              bg = Image.new('RGBA', (480, 800), (6, 11, 24, 255)); ic = src.resize((200, 200), Image.LANCZOS)
+              bg.paste(ic, (140, 300), ic); bg.save(sp)
+          PY
+          M=cap/android/app/src/main/AndroidManifest.xml
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.VIBRATE" />#' $M
+          G=cap/android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode $GITHUB_RUN_NUMBER/; s/versionName \"[^\"]*\"/versionName \"1.$GITHUB_RUN_NUMBER\"/" $G
+          grep -n "RECORD_AUDIO" $M; grep -n "versionCode\|versionName" $G
+      - name: Build and sign APK
+        run: |
+          cd cap/android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon -q
+          BT=$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)
+          echo "$KS_B64" | base64 -d > gc.jks
+          IN=app/build/outputs/apk/release/app-release-unsigned.apk
+          $ANDROID_HOME/build-tools/$BT/zipalign -p -f 4 $IN aligned.apk
+          $ANDROID_HOME/build-tools/$BT/apksigner sign --ks gc.jks --ks-key-alias gamecenter --ks-pass env:KS_PASS --key-pass env:KS_PASS --out ../../GameCenter-Android.apk aligned.apk
+          $ANDROID_HOME/build-tools/$BT/apksigner verify ../../GameCenter-Android.apk
+      - uses: actions/upload-artifact@v4
+        with: { name: android, path: GameCenter-Android.apk }
+
+  # ---------------------------------------------------------------- ویندوز، مک، لینوکس (Electron)
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, target: --win, pattern: 'GameCenter-Windows*' }
+          - { os: macos-latest, target: --mac, pattern: 'GameCenter-Mac*' }
+          - { os: ubuntu-latest, target: --linux, pattern: 'GameCenter-Linux*' }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Create Electron project
+        shell: bash
+        run: |
+          mkdir -p desk/build && cp icon-512.png desk/build/icon.png && cd desk
+          cat > package.json <<JSON
+          {
+            "name": "gamecenter",
+            "productName": "GameCenter",
+            "version": "1.0.$GITHUB_RUN_NUMBER",
+            "description": "GameCenter - online games, chat and game account vault",
+            "author": { "name": "GameCenter", "email": "gamecaenterfriend@gmail.com" },
+            "homepage": "$APP_URL",
+            "main": "main.js",
+            "build": {
+              "appId": "$APP_ID",
+              "productName": "GameCenter",
+              "directories": { "buildResources": "build", "output": "dist" },
+              "files": ["main.js", "offline.html"],
+              "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "artifactName": "GameCenter-Windows-Setup.\${ext}" },
+              "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "shortcutName": "GameCenter" },
+              "mac": { "target": [{ "target": "dmg", "arch": ["universal"] }], "category": "public.app-category.games", "artifactName": "GameCenter-Mac.\${ext}", "identity": null },
+              "linux": { "target": [{ "target": "AppImage", "arch": ["x64"] }], "category": "Game", "artifactName": "GameCenter-Linux.\${ext}" }
+            }
+          }
+          JSON
+          cat > main.js <<'JS'
+          const { app, BrowserWindow, shell, Menu } = require('electron');
+          const path = require('path');
+          const URL = process.env.GC_URL || 'APP_URL_HERE';
+          let win;
+          if (!app.requestSingleInstanceLock()) app.quit();
+          app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
+          function create() {
+            win = new BrowserWindow({
+              width: 1280, height: 860, minWidth: 380, minHeight: 600, backgroundColor: '#060b18', show: false,
+              title: 'GameCenter', autoHideMenuBar: true,
+              webPreferences: { contextIsolation: true, spellcheck: false }
+            });
+            Menu.setApplicationMenu(null);
+            win.webContents.setUserAgent(win.webContents.getUserAgent() + ' GameCenterApp');
+            win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
+            win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(URL) && !url.startsWith('file:')) { e.preventDefault(); shell.openExternal(url); } });
+            win.webContents.on('did-fail-load', (e, code, desc, url, isMain) => { if (isMain && code !== -3) win.loadFile(path.join(__dirname, 'offline.html')); });
+            win.once('ready-to-show', () => win.show());
+            win.loadURL(URL);
+          }
+          app.whenReady().then(create);
+          app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) create(); });
+          app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+          JS
+          sed -i.bak "s#APP_URL_HERE#$APP_URL#" main.js && rm -f main.js.bak
+          cat > offline.html <<'HTML'
+          <!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>GameCenter</title>
+          <style>body{margin:0;height:100vh;display:grid;place-items:center;background:#060b18;color:#e8eefb;font-family:Tahoma,sans-serif;text-align:center}
+          button{margin-top:18px;padding:12px 26px;border:0;border-radius:14px;background:linear-gradient(120deg,#2563eb,#10b981);color:#fff;font-size:16px;cursor:pointer}</style></head>
+          <body><div><div style="font-size:54px">📡</div><h2>اتصال به اینترنت برقرار نیست</h2><p>اینترنت را بررسی کن و دوباره تلاش کن.</p>
+          <button onclick="location.href='APP_URL_HERE'">تلاش دوباره</button></div></body></html>
+          HTML
+          sed -i.bak "s#APP_URL_HERE#$APP_URL#" offline.html && rm -f offline.html.bak
+          npm i --save-dev electron@33.2.1 electron-builder@25.1.8
+      - name: Build
+        shell: bash
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: cd desk && npx electron-builder ${{ matrix.target }} --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          path: desk/dist/${{ matrix.pattern }}
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------- آیفون (IPA بدون امضا)
+  ios:
+    runs-on: macos-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Build unsigned IPA
+        run: |
+          mkdir cap && cd cap
+          npm init -y > /dev/null
+          npm i @capacitor/core@6.2.0 @capacitor/cli@6.2.0 @capacitor/ios@6.2.0
+          mkdir www && cp ../index.html www/index.html
+          cat > capacitor.config.json <<JSON
+          { "appId": "$APP_ID", "appName": "$APP_NAME", "webDir": "www", "appendUserAgent": "GameCenterApp",
+            "backgroundColor": "#060b18", "server": { "url": "$APP_URL" } }
+          JSON
+          npx cap add ios
+          ICON=ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+          sips -z 1024 1024 ../icon-512.png --out "$ICON" > /dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'GameCenter needs the microphone for voice messages.'" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'GameCenter needs photos to send images.'" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'GameCenter needs the camera to send photos.'" ios/App/App/Info.plist || true
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos -derivedDataPath build             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" -quiet build
+          mkdir -p Payload && cp -R build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -qr ../../../GameCenter-iOS-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with: { name: ios, path: GameCenter-iOS-unsigned.ipa }
+
+  # ---------------------------------------------------------------- انتشار در Releases
+  release:
+    needs: [android, desktop, ios]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: out, merge-multiple: true }
+      - run: ls -la out
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: GameCenter 1.${{ github.run_number }}
+          make_latest: true
+          body: |
+            📱 اندروید: GameCenter-Android.apk
+            🪟 ویندوز: GameCenter-Windows-Setup.exe
+            🍎 مک: GameCenter-Mac.dmg
+            🐧 لینوکس: GameCenter-Linux.AppImage
+            📲 آیفون (بدون امضا، برای Sideloadly/AltStore): GameCenter-iOS-unsigned.ipa
+          files: out/*
