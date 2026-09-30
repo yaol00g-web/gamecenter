@@ -1609,6 +1609,10 @@ ol.inst{padding-inline-start:20px;margin-top:14px;line-height:2.1}
 @media (max-width:600px){.back-bar{top:auto;bottom:calc(150px + env(safe-area-inset-bottom,0px));flex-direction:column;gap:8px;text-align:center;padding:10px 14px}}
 .m-del{font-style:italic;color:var(--muted);font-size:13.5px}
 .bub.t-del{opacity:.85}
+.inst-files{margin-top:14px;padding:12px;border-radius:16px;background:rgba(var(--sf),.8);box-shadow:inset 0 0 0 1px var(--stroke-2);display:flex;flex-direction:column;gap:8px}
+.inst-fl{display:flex;flex-wrap:wrap;gap:6px}.inst-files small{line-height:1.8}
+.lp-app-os a{padding:8px 14px;border-radius:99px;background:rgba(var(--sf),.9);box-shadow:inset 0 0 0 1px var(--stroke-2);font-weight:700;font-size:13px;color:var(--ink);text-decoration:none}
+.lp-app-os a:hover{box-shadow:inset 0 0 0 2px var(--blue-2)}
 
 </style>
 </head>
@@ -10860,7 +10864,10 @@ XA['adv-stats'] = el => openAdvStats(el && el.dataset && el.dataset.uid);
 /* =====================================================================
    نسخه ۱۲: نصب وب‌اپ روی گوشی و میان‌بُر شناور «کارت من»
    ===================================================================== */
-const isStandalone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+const IN_APP = /GameCenterApp/.test(navigator.userAgent || '');
+const REL = 'https://github.com/yaol00g-web/gamecenter/releases/latest/download/';
+const APP_FILES = [['android', '🤖', 'اندروید', 'GameCenter-Android.apk'], ['win', '🪟', 'ویندوز', 'GameCenter-Windows-Setup.exe'], ['mac', '🍎', 'مک', 'GameCenter-Mac.dmg'], ['linux', '🐧', 'لینوکس', 'GameCenter-Linux.AppImage'], ['ios', '📲', 'آیفون (IPA)', 'GameCenter-iOS-unsigned.ipa']];
+const isStandalone = () => { if (IN_APP) return true; try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
 const devKind = () => { const u = navigator.userAgent || ''; return /iphone|ipad|ipod/i.test(u) || (/macintosh/i.test(u) && navigator.maxTouchPoints > 1) ? 'ios' : /android/i.test(u) ? 'android' : 'desktop'; };
 const INST_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M12 7v7m-3-3 3 3 3-3M10 18h4"/></svg>';
 
@@ -10893,6 +10900,8 @@ XA['install'] = async () => {
     ${https ? '' : '<div class="inst-warn">⚠️ نصب فقط وقتی سایت با https (مثل آدرس netlify.app) باز شده باشد ممکن است.</div>'}
     <div class="seg" id="inst-t">${Object.entries(G).map(([k, v]) => `<button data-k="${k}" class="${k === tab ? 'on' : ''}">${v[0]}</button>`).join('')}</div>
     <div id="inst-b"></div>
+    <div class="inst-files"><b>⬇️ یا فایل نصبی اپلیکیشن را دانلود کن</b><div class="inst-fl">${APP_FILES.map(([k, e, n, f]) => `<a class="btn btn-ghost sm" href="${REL + f}" rel="noopener" data-os="${k}">${e} ${n}</a>`).join('')}</div>
+      <small class="muted">اندروید: بعد از دانلود فایل APK، روی آن بزن و «نصب» را تأیید کن (اگر پرسید، «اجازه نصب از این منبع» را روشن کن). آیفون: فایل IPA فقط با Sideloadly یا AltStore نصب می‌شود؛ راه ساده‌تر همان «Add to Home Screen» است.</small></div>
     <ul class="inst-perks"><li>⚡ باز شدن سریع و کار با اینترنت ضعیف</li><li>🔔 اعلان پیام و دعوت بازی</li><li>📱 تمام‌صفحه، بدون نوار مرورگر</li><li>🔄 همیشه به‌روز؛ نیازی به دانلود دوباره نیست</li></ul>
     <div class="m-foot"><button class="btn btn-ghost" data-close>باشه</button></div>`, m => {
     const now = () => { const b = m.querySelector('#inst-now'); if (b) b.innerHTML = (PWA_EV || window.__bip) ? `<button class="btn btn-pri wide" id="inst-go">📲 نصب همین حالا</button>` : ''; const g = m.querySelector('#inst-go'); if (g) g.onclick = () => instPrompt(); };
@@ -10937,7 +10946,7 @@ function instRefresh() {
     if (fin) fin.insertAdjacentHTML('beforebegin', `<section class="lp-sec lp-app glass line"><div class="lp-app-t"><span class="inst-ic big">${INST_ICON}</span><div><h2>GameCenter روی گوشی تو</h2>
       <p>وب‌اپ را با یک لمس روی اندروید، آیفون یا کامپیوتر نصب کن؛ بدون گوگل‌پلی و اپ‌استور، تمام‌صفحه و با اعلان.</p>
       <div class="lp-cta"><button class="btn btn-pri lg" data-x="install">📲 دانلود و نصب اپ</button></div></div></div>
-      <div class="lp-app-os"><span>🤖 اندروید</span><span>🍎 آیفون</span><span>💻 ویندوز و مک</span></div></section>`);
+      <div class="lp-app-os">${APP_FILES.map(([k, e, n, f]) => `<a href="${REL + f}" rel="noopener">${e} ${n}</a>`).join('')}</div></section>`);
   };
 }
 
