@@ -79,17 +79,33 @@ jobs:
           sed -i '0,/^android {/s//android {\n    lint { checkReleaseBuilds false\n        abortOnError false }/' $G
           sed -i "s/versionCode [0-9]*/versionCode $GITHUB_RUN_NUMBER/; s/versionName \"[^\"]*\"/versionName \"1.$GITHUB_RUN_NUMBER\"/" $G
           grep -n "RECORD_AUDIO" $M; grep -n "versionCode\|versionName" $G
-      - name: Build and sign APK
+      - name: Build APK (release)
+        id: rel
+        continue-on-error: true
         run: |
           cd cap/android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace
-          BT=$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tail -80
+          test -f app/build/outputs/apk/release/app-release-unsigned.apk
+      - name: Sign APK
+        id: sign
+        if: steps.rel.outcome == 'success'
+        continue-on-error: true
+        run: |
+          cd cap/android
+          BT=$(ls $ANDROID_HOME/build-tools | sort -V | tail -1); echo "build-tools $BT"
           echo "$KS_B64" | base64 -d > gc.jks
-          IN=app/build/outputs/apk/release/app-release-unsigned.apk
-          $ANDROID_HOME/build-tools/$BT/zipalign -p -f 4 $IN aligned.apk
-          $ANDROID_HOME/build-tools/$BT/apksigner sign --ks gc.jks --ks-key-alias gamecenter --ks-pass env:KS_PASS --key-pass env:KS_PASS --out ../../GameCenter-Android.apk aligned.apk
+          $ANDROID_HOME/build-tools/$BT/zipalign -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          $ANDROID_HOME/build-tools/$BT/apksigner sign --ks gc.jks --ks-type JKS --ks-key-alias gamecenter --ks-pass env:KS_PASS --key-pass env:KS_PASS --out ../../GameCenter-Android.apk aligned.apk
           $ANDROID_HOME/build-tools/$BT/apksigner verify ../../GameCenter-Android.apk
+      - name: Fallback - debug APK
+        if: steps.sign.outcome != 'success'
+        run: |
+          cd cap/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -120
+          cp app/build/outputs/apk/debug/app-debug.apk ../../GameCenter-Android.apk
+          echo "⚠️ Release signing failed; built debug APK instead." >> $GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@v4
         with: { name: android, path: GameCenter-Android.apk }
 
